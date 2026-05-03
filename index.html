@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>みみず散歩シム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div id="app" class="text-center">
+        <h1 class="text-2xl font-bold">みみず散歩シム</h1>
+        <p>読み込み中...</p>
+    </div>
+
+    <script>
+        // 本来はここにReactなどのロジックが入りますが、
+        // まずは動作確認として、このページが表示されれば成功です！
+        document.getElementById('app').innerHTML = `
+            <div class="p-6 bg-white rounded-lg shadow-xl">
+                <h2 class="text-xl mb-4">みみずが準備しています...</h2>
+                <p>ページが表示されました！ここからロジックを読み込みます。</p>
+            </div>
+        `;
+    </script>
+</body>
+</html>
