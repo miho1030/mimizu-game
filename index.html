@@ -5,15 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>みみず育成ゲーム</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 土の中のアニメーション（散歩中以外） */
+        @keyframes dirtMoving {
+            0% { background-position: 0 0; }
+            100% { background-position: 100px 100px; }
+        }
+        .bg-dirt {
+            background-color: #4B3621;
+            background-image: radial-gradient(#3d2c1b 10%, transparent 10%);
+            background-size: 20px 20px;
+            animation: dirtMoving 5s linear infinite;
+        }
+        /* 地上の背景（散歩中） */
+        .bg-grass {
+            background-color: #7cfc00; /* 草色 */
+            background-image: 
+                linear-gradient(135deg, #a5ff5b 25%, transparent 25%), 
+                linear-gradient(225deg, #a5ff5b 25%, transparent 25%);
+            background-size: 30px 30px;
+            animation: none;
+        }
+        /* みみずのプルプル（餌を食べた時） */
+        @keyframes bounce {
+            0%, 100% { transform: scale(var(--worm-scale)) translateY(0); }
+            50% { transform: scale(var(--worm-scale)) translateY(-10px); }
+        }
+        .eating {
+            animation: bounce 0.3s ease-in-out 2;
+        }
+    </style>
 </head>
-<body class="bg-[#4B3621] text-stone-200 min-h-screen flex flex-col items-center justify-center p-4">
+<body id="body-bg" class="bg-dirt text-stone-200 min-h-screen flex flex-col items-center justify-center p-4 transition-all duration-500">
 
-    <div class="text-center mb-6">
+    <div class="text-center mb-6 z-10">
         <h1 class="text-3xl font-bold text-stone-100">みみず育成ゲーム</h1>
-        <p class="text-sm opacity-70">リードをつけてお出かけしよう</p>
+        <p id="sub-title" class="text-sm opacity-70">土の中で生活中...</p>
     </div>
 
-    <div class="w-full max-w-sm bg-[#2D241E] rounded-3xl p-6 border border-white/10 shadow-xl mb-8">
+    <div class="w-full max-w-sm bg-[#2D241E]/90 backdrop-blur-sm rounded-3xl p-6 border border-white/10 shadow-xl mb-8 z-10 transition-all duration-500" id="status-card">
         <div class="flex justify-between text-xs font-bold opacity-60 mb-2">
             <span>HUNGER</span>
             <span id="hunger-text">30%</span>
@@ -24,42 +54,14 @@
         <p id="message" class="text-center mt-4 font-medium text-pink-100">こんにちは！ぼくはみみずだよ。</p>
     </div>
 
-    <div id="worm-area" class="h-32 flex items-center justify-center mb-8">
-        <div id="worm" class="flex items-center -space-x-4">
-            <div class="w-14 h-14 rounded-full bg-[#FFB6C1] shadow-lg flex items-center justify-center relative">
-                <div class="w-3 h-3 bg-black rounded-full absolute top-4 left-2.5"></div>
-                <div class="w-3 h-3 bg-black rounded-full absolute top-4 right-2.5"></div>
+    <div id="worm-area" class="h-40 flex items-center justify-center mb-10 z-10 relative">
+        <div id="worm-body" class="flex items-center -space-x-4 transition-transform duration-300 origin-center" style="--worm-scale: 1; transform: scale(1);">
+            <div id="worm-head" class="w-14 h-14 rounded-full bg-[#FFB6C1] shadow-lg flex items-center justify-center relative z-10">
+                <div class="w-3 h-3 bg-black rounded-full absolute top-4 left-2.5">
+                    <div class="w-1 h-1 bg-white rounded-full absolute top-0.5 left-0.5"></div>
+                </div>
+                <div class="w-3 h-3 bg-black rounded-full absolute top-4 right-2.5">
+                    <div class="w-1 h-1 bg-white rounded-full absolute top-0.5 left-0.5"></div>
+                </div>
             </div>
-            <div class="w-14 h-14 rounded-full bg-[#FF99AA] shadow-lg"></div>
-            <div class="w-14 h-14 rounded-full bg-[#FF99AA] shadow-lg"></div>
-            <div class="w-14 h-14 rounded-full bg-[#FF99AA] shadow-lg"></div>
-        </div>
-    </div>
-
-    <div class="w-full max-w-sm flex gap-4">
-        <button id="feed-btn" class="flex-1 py-4 bg-pink-500 rounded-2xl font-bold text-stone-900 hover:bg-pink-400 transition-colors">餌をあげる</button>
-        <button id="walk-btn" class="flex-1 py-4 bg-amber-600 rounded-2xl font-bold text-white hover:bg-amber-500 transition-colors">散歩に行く</button>
-    </div>
-
-    <script>
-        let hunger = 30;
-        const hungerText = document.getElementById('hunger-text');
-        const hungerBar = document.getElementById('hunger-bar');
-        const message = document.getElementById('message');
-
-        document.getElementById('feed-btn').addEventListener('click', () => {
-            hunger = Math.max(hunger - 25, 0);
-            hungerText.innerText = Math.round(hunger) + '%';
-            hungerBar.style.width = hunger + '%';
-            message.innerText = "パクパク！おいしい！";
-            setTimeout(() => message.innerText = "お腹いっぱい！しあわせ〜。", 2000);
-        });
-
-        setInterval(() => {
-            hunger = Math.min(hunger + 2, 100);
-            hungerText.innerText = Math.round(hunger) + '%';
-            hungerBar.style.width = hunger + '%';
-        }, 3000);
-    </script>
-</body>
-</html>
+            <div class="w-
