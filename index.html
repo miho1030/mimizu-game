@@ -1,68 +1,297 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>みみず育成ゲーム</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-/* 土の中のアニメーション（散歩中以外） */
-@keyframes dirtMoving {
-0% { background-position: 0 0; }
-100% { background-position: 100px 100px; }
-}
-.bg-dirt {
-background-color: #4B3621;
-background-image: radial-gradient(#3d2c1b 10%, transparent 10%);
-background-size: 20px 20px;
-animation: dirtMoving 5s linear infinite;
-}
-/* 地上の背景（散歩中） */
-.bg-grass {
-background-color: #7cfc00; /* 草色 */
-background-image:
-linear-gradient(135deg, #a5ff5b 25%, transparent 25%),
-linear-gradient(225deg, #a5ff5b 25%, transparent 25%);
-background-size: 30px 30px;
-animation: none;
-}
-/* みみずのプルプル（餌を食べた時） */
-@keyframes bounce {
-0%, 100% { transform: scale(var(--worm-scale)) translateY(0); }
-50% { transform: scale(var(--worm-scale)) translateY(-10px); }
-}
-.eating {
-animation: bounce 0.3s ease-in-out 2;
-}
-</style>
-</head>
-<body id="body-bg" class="bg-dirt text-stone-200 min-h-screen flex flex-col items-center justify-center p-4 transition-all duration-500">
-code
-Code
-<div class="text-center mb-6 z-10">
-    <h1 class="text-3xl font-bold text-stone-100">みみず育成ゲーム</h1>
-    <p id="sub-title" class="text-sm opacity-70">土の中で生活中...</p>
-</div>
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-<div class="w-full max-w-sm bg-[#2D241E]/90 backdrop-blur-sm rounded-3xl p-6 border border-white/10 shadow-xl mb-8 z-10 transition-all duration-500" id="status-card">
-    <div class="flex justify-between text-xs font-bold opacity-60 mb-2">
-        <span>HUNGER</span>
-        <span id="hunger-text">30%</span>
-    </div>
-    <div class="h-3 w-full bg-black rounded-full overflow-hidden">
-        <div id="hunger-bar" class="h-full bg-pink-400 transition-all duration-300" style="width: 30%"></div>
-    </div>
-    <p id="message" class="text-center mt-4 font-medium text-pink-100">こんにちは！ぼくはみみずだよ。</p>
-</div>
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Utensils, Dog, Sparkles } from 'lucide-react';
 
-<div id="worm-area" class="h-40 flex items-center justify-center mb-10 z-10 relative">
-    <div id="worm-body" class="flex items-center -space-x-4 transition-transform duration-300 origin-center" style="--worm-scale: 1; transform: scale(1);">
-        <div id="worm-head" class="w-14 h-14 rounded-full bg-[#FFB6C1] shadow-lg flex items-center justify-center relative z-10">
-            <div class="w-3 h-3 bg-black rounded-full absolute top-4 left-2.5">
-                <div class="w-1 h-1 bg-white rounded-full absolute top-0.5 left-0.5"></div>
-            </div>
-            <div class="w-3 h-3 bg-black rounded-full absolute top-4 right-2.5">
-                <div class="w-1 h-1 bg-white rounded-full absolute top-0.5 left-0.5"></div>
-            </div>
+export default function App() {
+  const [wormName, setWormName] = useState("");
+  const [isNamed, setIsNamed] = useState(false);
+  const [size, setSize] = useState(1);
+  const [hunger, setHunger] = useState(30); 
+  const [lastFed, setLastFed] = useState<number | null>(null);
+  const [message, setMessage] = useState("こんにちは！ぼくはみみずだよ。");
+  const [isEating, setIsEating] = useState(false);
+  
+  // Walking states
+  const [isWalking, setIsWalking] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Hunger increases over time
+  useEffect(() => {
+    if (!isNamed) return;
+    const timer = setInterval(() => {
+      setHunger((prev) => Math.min(prev + (isWalking ? 4 : 2), 100));
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [isWalking, isNamed]);
+
+  // Update message
+  useEffect(() => {
+    if (!isNamed) return;
+    if (isWalking) {
+      setMessage(`${wormName}はお散歩をたのしんでいるよ！`);
+    } else if (hunger > 80) {
+      setMessage("お腹がペコペコだよ… 餌をちょうだい！");
+    } else if (hunger > 50) {
+      setMessage("ちょっとお腹が空いてきたなぁ。");
+    } else if (hunger < 10) {
+      setMessage("お腹いっぱい！しあわせ〜。");
+    }
+  }, [hunger, isWalking, isNamed, wormName]);
+
+  const handleFeed = useCallback(() => {
+    if (hunger <= 0 || isWalking) return;
+
+    setHunger((prev) => Math.max(prev - 25, 0));
+    setSize((prev) => prev + 0.05);
+    setLastFed(Date.now());
+    setMessage("パクパク！おいしい！");
+    
+    setIsEating(true);
+    setTimeout(() => setIsEating(false), 600);
+  }, [hunger, isWalking]);
+
+  const toggleWalk = () => {
+    setIsWalking(!isWalking);
+    if (!isWalking) {
+      setMessage(`${wormName}とお散歩に出発だ！`);
+    } else {
+      setMousePos({ x: 0, y: 0 });
+      setMessage("ただいま〜。");
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isWalking || !containerRef.current) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    let clientX, clientY;
+    
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    setMousePos({
+      x: clientX - rect.left - rect.width / 2,
+      y: clientY - rect.top - rect.height / 2,
+    });
+  };
+
+  const handleStart = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (wormName.trim()) {
+      setIsNamed(true);
+      setMessage(`こんにちは！ぼくは${wormName}だよ。`);
+    }
+  };
+
+  if (!isNamed) {
+    return (
+      <div className="min-h-screen bg-dirt animate-dirt-moving flex items-center justify-center p-6 text-stone-200">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm bg-[#2D241E]/95 backdrop-blur-md rounded-3xl p-8 border border-white/10 shadow-2xl text-center space-y-6"
+        >
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-stone-100">みみず育成ゲーム</h1>
+            <p className="text-sm opacity-70">あなたのみみずに名前を付けてね</p>
+          </div>
+          
+          <form onSubmit={handleStart} className="space-y-4">
+            <input 
+              type="text" 
+              value={wormName}
+              onChange={(e) => setWormName(e.target.value)}
+              placeholder="なまえを入力..."
+              className="w-full bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-pink-400/50 transition-colors text-center"
+              maxLength={10}
+              required
+            />
+            <button 
+              type="submit"
+              className="w-full bg-pink-500 hover:bg-pink-400 text-white font-bold py-3 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              ゲームをはじめる
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onTouchMove={handleMouseMove}
+      className={`min-h-screen transition-all duration-700 overflow-hidden relative flex flex-col items-center justify-center font-sans text-stone-200 select-none
+        ${isWalking ? 'bg-grass' : 'bg-dirt animate-dirt-moving'}`}
+    >
+      {/* HUD Info */}
+      <div className="absolute top-8 text-center z-10">
+        <h1 className="text-3xl font-bold text-stone-100 drop-shadow-lg">
+          {wormName}
+        </h1>
+        <p className="text-xs uppercase tracking-widest opacity-60 mt-1 font-bold">
+          {isWalking ? "地上を散歩中" : "土の中で生活中"}
+        </p>
+      </div>
+
+      {/* Leash */}
+      {isWalking && (
+        <svg className="absolute inset-0 w-full h-full pointer-events-none z-20">
+          <motion.line
+            x1="50%"
+            y1="50%"
+            x2={`calc(50% + ${mousePos.x}px)`}
+            y2={`calc(50% + ${mousePos.y}px)`}
+            stroke="#ffffff" 
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.4 }}
+          />
+        </svg>
+      )}
+
+      {/* Game Content */}
+      <div className="z-10 flex flex-col items-center gap-6 p-8 max-w-sm w-full">
+        {/* Status Card */}
+        <div className="w-full bg-[#2D241E]/90 backdrop-blur-sm rounded-3xl p-5 border border-white/10 shadow-xl space-y-3 transition-all">
+          <div className="flex justify-between items-center text-[10px] uppercase tracking-tighter font-bold opacity-60">
+            <span>お腹の空き具合 (HUNGER)</span>
+            <span>{Math.round(hunger)}%</span>
+          </div>
+          <div className="h-3 w-full bg-black rounded-full overflow-hidden">
+            <motion.div
+              className={`h-full ${hunger > 70 ? 'bg-orange-400' : 'bg-pink-400 shadow-[0_0_10px_rgba(244,114,182,0.3)]'}`}
+              initial={{ width: 0 }}
+              animate={{ width: `${hunger}%` }}
+              transition={{ type: "spring", stiffness: 50 }}
+            />
+          </div>
+          <p className="text-center text-sm font-medium h-5 text-pink-100">
+            {message}
+          </p>
         </div>
-        <div class="w-
+
+        {/* Worm Area */}
+        <div className="relative h-48 w-full flex items-center justify-center my-4">
+          <motion.div
+            className={`relative flex items-center justify-center ${isEating ? 'animate-bounce-custom' : ''}`}
+            style={{ '--worm-scale': size } as any}
+            animate={{
+              scale: size,
+              x: isWalking ? mousePos.x : 0,
+              y: isWalking ? mousePos.y : 0,
+            }}
+            transition={{
+              scale: { type: "spring", stiffness: 100, damping: 10 },
+              x: isWalking ? { type: "spring", damping: 20, stiffness: 80 } : { duration: 0.3 },
+              y: isWalking ? { type: "spring", damping: 20, stiffness: 80 } : { duration: 0.3 },
+            }}
+          >
+            <div className="flex items-center -space-x-4">
+              {[...Array(5)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="w-14 h-14 rounded-full shadow-lg border border-black/5"
+                  style={{
+                    backgroundColor: i === 0 ? "#FFB6C1" : "#FF99AA", 
+                    zIndex: 5 - i,
+                  }}
+                  animate={{
+                    y: isWalking ? [0, -5, 0] : [0, -2, 0],
+                    scaleY: [1, 0.95, 1],
+                  }}
+                  transition={{
+                    duration: isWalking ? 0.4 : 2,
+                    repeat: Infinity,
+                    delay: i * 0.12,
+                    ease: "easeInOut",
+                  }}
+                >
+                  {i === 0 && (
+                    <div className="relative w-full h-full">
+                      {isWalking && <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full opacity-40" />}
+                      <div className="absolute top-4 left-2.5 w-3 h-3 bg-black rounded-full">
+                        <div className="w-1 h-1 bg-white rounded-full absolute top-0.5 left-0.5" />
+                      </div>
+                      <div className="absolute top-4 right-2.5 w-3 h-3 bg-black rounded-full">
+                        <div className="w-1 h-1 bg-white rounded-full absolute top-0.5 left-0.5" />
+                      </div>
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-4 opacity-40">
+                        <div className="w-2 h-1 bg-red-400 rounded-full blur-[1px]" />
+                        <div className="w-2 h-1 bg-red-400 rounded-full blur-[1px]" />
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+          
+          <AnimatePresence>
+            {lastFed && !isWalking && (
+              <motion.div
+                key={lastFed}
+                initial={{ opacity: 0, y: 0, scale: 0.5 }}
+                animate={{ opacity: 1, y: -80, scale: 1.2 }}
+                exit={{ opacity: 0 }}
+                className="absolute text-xl font-bold text-pink-300 drop-shadow-md flex items-center gap-1"
+              >
+                <Sparkles className="w-4 h-4" /> 成長中！
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Controls */}
+        <div className="flex flex-col gap-3 w-full mt-4">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleFeed}
+            disabled={hunger === 0 || isWalking}
+            className={`flex items-center justify-center gap-2 px-8 py-3 rounded-2xl font-bold text-lg shadow-lg border-b-4 active:border-b-0 active:translate-y-1 transition-all
+              ${(hunger === 0 || isWalking)
+                ? 'bg-stone-700 border-stone-800 text-stone-500 cursor-not-allowed opacity-50' 
+                : 'bg-pink-500 border-pink-700 hover:bg-pink-400 text-white'
+              }`}
+          >
+            <Utensils className="w-5 h-5" />
+            餌をあげる
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={toggleWalk}
+            className={`flex items-center justify-center gap-2 px-8 py-3 rounded-2xl font-bold text-lg shadow-lg border-b-4 active:border-b-0 active:translate-y-1 transition-all
+              ${isWalking 
+                ? 'bg-red-500 border-red-700 hover:bg-red-400 text-white' 
+                : 'bg-stone-100 border-stone-300 hover:bg-white text-stone-900'
+              }`}
+          >
+            <Dog className="w-5 h-5" />
+            {isWalking ? "お散歩を切り上げる" : "お散歩に行く"}
+          </motion.button>
+        </div>
+      </div>
+
+      <div className="absolute bottom-6 text-[10px] uppercase tracking-[0.2em] text-stone-500 font-bold opacity-40">
+        SIZE: {size.toFixed(2)}m • {wormName} Sim v1.2
+      </div>
+    </div>
+  );
+}
