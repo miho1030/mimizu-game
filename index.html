@@ -5,70 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>みみず育成ゲーム</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* みみずのニョキニョキアニメーション */
-        @keyframes wiggles {
-            0%, 100% { transform: translateY(0) scaleY(1); }
-            50% { transform: translateY(-12px) scaleY(0.85); }
-        }
-        .worm-segment {
-            animation: wiggles 1.5s infinity ease-in-out;
-        }
-        /* リードの点線アニメーション */
-        @keyframes dash {
-            to { stroke-dashoffset: 0; }
-        }
-        #leash-line {
-            stroke-dasharray: 5,3;
-            stroke-dashoffset: 100;
-            animation: dash 5s linear infinity;
-        }
-    </style>
 </head>
-<body class="bg-[#4B3621] text-stone-200 overflow-hidden m-0 font-sans relative">
-    
-    <svg id="leash-svg" class="absolute inset-0 pointer-events-none w-full h-full z-20 opacity-0 transition-opacity duration-300">
-        <line id="leash-line" x1="0" y1="0" x2="0" y2="0" stroke="#FF4444" stroke-width="3" />
-        <circle id="leash-handle" cx="0" cy="0" r="6" fill="#FF4444" />
-    </svg>
+<body class="bg-[#4B3621] text-stone-200 min-h-screen flex flex-col items-center justify-center p-4">
 
-    <div id="container" class="min-h-screen flex flex-col items-center justify-center p-8 relative">
-        
-        <div class="z-10 flex flex-col items-center gap-8 max-w-md w-full">
-            <div class="text-center">
-                <h1 class="text-3xl font-bold text-stone-100 mb-1">みみず育成ゲーム</h1>
-                <p class="text-xs text-stone-400">リードをつけてお出かけしよう</p>
+    <div class="text-center mb-6">
+        <h1 class="text-3xl font-bold text-stone-100">みみず育成ゲーム</h1>
+        <p class="text-sm opacity-70">リードをつけてお出かけしよう</p>
+    </div>
+
+    <div class="w-full max-w-sm bg-[#2D241E] rounded-3xl p-6 border border-white/10 shadow-xl mb-8">
+        <div class="flex justify-between text-xs font-bold opacity-60 mb-2">
+            <span>HUNGER</span>
+            <span id="hunger-text">30%</span>
+        </div>
+        <div class="h-3 w-full bg-black rounded-full overflow-hidden">
+            <div id="hunger-bar" class="h-full bg-pink-400 transition-all duration-300" style="width: 30%"></div>
+        </div>
+        <p id="message" class="text-center mt-4 font-medium text-pink-100">こんにちは！ぼくはみみずだよ。</p>
+    </div>
+
+    <div id="worm-area" class="h-32 flex items-center justify-center mb-8">
+        <div id="worm" class="flex items-center -space-x-4">
+            <div class="w-14 h-14 rounded-full bg-[#FFB6C1] shadow-lg flex items-center justify-center relative">
+                <div class="w-3 h-3 bg-black rounded-full absolute top-4 left-2.5"></div>
+                <div class="w-3 h-3 bg-black rounded-full absolute top-4 right-2.5"></div>
             </div>
+            <div class="w-14 h-14 rounded-full bg-[#FF99AA] shadow-lg"></div>
+            <div class="w-14 h-14 rounded-full bg-[#FF99AA] shadow-lg"></div>
+            <div class="w-14 h-14 rounded-full bg-[#FF99AA] shadow-lg"></div>
+        </div>
+    </div>
 
-            <div class="w-full bg-black/40 backdrop-blur-md rounded-3xl p-5 border border-white/10 space-y-3">
-                <div class="flex justify-between text-xs font-bold opacity-60">
-                    <span>HUNGER</span>
-                    <span id="hunger-text">30%</span>
-                </div>
-                <div class="h-3 w-full bg-stone-900 rounded-full overflow-hidden border border-stone-800">
-                    <div id="hunger-bar" class="h-full bg-pink-400 transition-all duration-300" style="width: 30%"></div>
-                </div>
-                <p id="message" class="text-center font-medium animate-pulse text-pink-100">こんにちは！ぼくはみみずだよ。</p>
-            </div>
+    <div class="w-full max-w-sm flex gap-4">
+        <button id="feed-btn" class="flex-1 py-4 bg-pink-500 rounded-2xl font-bold text-stone-900 hover:bg-pink-400 transition-colors">餌をあげる</button>
+        <button id="walk-btn" class="flex-1 py-4 bg-amber-600 rounded-2xl font-bold text-white hover:bg-amber-500 transition-colors">散歩に行く</button>
+    </div>
 
-            <div id="worm-wrapper" class="relative h-64 w-64 flex items-center justify-center transition-all duration-300">
-                <div id="worm" class="flex items-center -space-x-4 cursor-pointer transition-transform duration-300 origin-center">
-                    <div class="worm-segment w-14 h-14 rounded-full shadow-lg bg-[#FFB6C1] relative z-10">
-                        <div class="absolute top-4 left-2.5 w-3 h-3 bg-black rounded-full border-2 border-white/20">
-                            <div class="absolute top-0.5 left-0.5 w-1 h-1 bg-white rounded-full"></div>
-                        </div>
-                        <div class="absolute top-4 right-2.5 w-3 h-3 bg-black rounded-full border-2 border-white/20">
-                            <div class="absolute top-0.5 left-0.5 w-1 h-1 bg-white rounded-full"></div>
-                        </div>
-                        <div class="absolute bottom-4 left-1 w-2.5 h-1.5 bg-red-400/50 rounded-full blur-[1px]"></div>
-                        <div class="absolute bottom-4 right-1 w-2.5 h-1.5 bg-red-400/50 rounded-full blur-[1px]"></div>
-                    </div>
-                    <div class="worm-segment w-14 h-14 rounded-full shadow-lg bg-[#FF99AA] z-9" style="animation-delay: 0.15s"></div>
-                    <div class="worm-segment w-14 h-14 rounded-full shadow-lg bg-[#FF99AA] z-8" style="animation-delay: 0.3s"></div>
-                    <div class="worm-segment w-14 h-14 rounded-full shadow-lg bg-[#FF99AA] z-7" style="animation-delay: 0.45s"></div>
-                    <div class="worm-segment w-14 h-14 rounded-full shadow-lg bg-[#FF99AA] z-6" style="animation-delay: 0.6s"></div>
-                </div>
-            </div>
+    <script>
+        let hunger = 30;
+        const hungerText = document.getElementById('hunger-text');
+        const hungerBar = document.getElementById('hunger-bar');
+        const message = document.getElementById('message');
 
-            <div class="flex gap-4 w-full mt-4 z-30">
-                <button
+        document.getElementById('feed-btn').addEventListener('click', () => {
+            hunger = Math.max(hunger - 25, 0);
+            hungerText.innerText = Math.round(hunger) + '%';
+            hungerBar.style.width = hunger + '%';
+            message.innerText = "パクパク！おいしい！";
+            setTimeout(() => message.innerText = "お腹いっぱい！しあわせ〜。", 2000);
+        });
+
+        setInterval(() => {
+            hunger = Math.min(hunger + 2, 100);
+            hungerText.innerText = Math.round(hunger) + '%';
+            hungerBar.style.width = hunger + '%';
+        }, 3000);
+    </script>
+</body>
+</html>
