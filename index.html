@@ -5,87 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>みみず散歩シム</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/framer-motion@10/dist/framer-motion.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-[#4B3621] m-0">
-    <div id="root"></div>
+<body class="bg-[#4B3621] text-stone-200">
+    <div id="app" class="min-h-screen flex flex-col items-center justify-center p-8">
+        <h1 class="text-3xl font-bold mb-8">みみず散歩シム</h1>
+        
+        <div class="w-full max-w-sm bg-black/40 backdrop-blur-md rounded-3xl p-6 border border-white/10 text-center">
+            <div class="flex justify-between text-xs font-bold opacity-60 mb-2">
+                <span>HUNGER</span>
+                <span id="hunger-text">30%</span>
+            </div>
+            <div class="h-3 w-full bg-stone-900 rounded-full overflow-hidden border border-stone-800">
+                <div id="hunger-bar" class="h-full bg-pink-400" style="width: 30%"></div>
+            </div>
+            <p id="message" class="font-medium mt-4">こんにちは！ぼくはみみずだよ。</p>
+        </div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useCallback, useRef } = React;
-        const { motion, AnimatePresence } = Motion;
-        const { Utensils, Info, Footprints, MousePointer2 } = Lucide;
+        <div class="flex gap-4 w-full max-w-sm mt-8">
+            <button id="feed-btn" class="flex-1 py-4 rounded-2xl font-bold bg-pink-400 text-stone-900">餌をあげる</button>
+        </div>
+    </div>
 
-        function App() {
-            const [size, setSize] = useState(1);
-            const [hunger, setHunger] = useState(30);
-            const [message, setMessage] = useState("こんにちは！ぼくはみみずだよ。");
-            const [shake, setShake] = useState(false);
-            const [isWalking, setIsWalking] = useState(false);
-            const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-            const [wormPos, setWormPos] = useState({ x: 0, y: 0 });
-            const containerRef = useRef(null);
+    <script>
+        let hunger = 30;
+        const hungerText = document.getElementById('hunger-text');
+        const hungerBar = document.getElementById('hunger-bar');
+        const messageText = document.getElementById('message');
 
-            useEffect(() => {
-                const timer = setInterval(() => setHunger(prev => Math.min(prev + 2, 100)), 2000);
-                return () => clearInterval(timer);
-            }, []);
+        document.getElementById('feed-btn').addEventListener('click', () => {
+            hunger = Math.max(hunger - 25, 0);
+            hungerText.innerText = Math.round(hunger) + '%';
+            hungerBar.style.width = hunger + '%';
+            messageText.innerText = "パクパク！おいしい！";
+            setTimeout(() => {
+                if(hunger < 50) messageText.innerText = "お腹いっぱい！しあわせ〜。";
+            }, 2000);
+        });
 
-            useEffect(() => {
-                if (isWalking) setMessage("お散歩たのしいな〜！");
-                else if (hunger > 80) setMessage("お腹がペコペコだよ… 餌をちょうだい！");
-                else if (hunger > 50) setMessage("ちょっとお腹が空いてきたなぁ。");
-                else if (hunger < 10) setMessage("お腹いっぱい！しあわせ〜。");
-            }, [hunger, isWalking]);
-
-            const handleMouseMove = (e) => {
-                if (!isWalking || !containerRef.current) return;
-                const rect = containerRef.current.getBoundingClientRect();
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                const x = clientX - rect.left;
-                const y = clientY - rect.top;
-                setMousePos({ x, y });
-                setWormPos({ x: x + (Math.random() - 0.5) * 20, y: y + (Math.random() - 0.5) * 20 + 100 });
-            };
-
-            const handleFeed = () => {
-                if (hunger <= 0 || isWalking) return;
-                setHunger(prev => Math.max(prev - 25, 0));
-                setSize(prev => prev + 0.1);
-                setMessage("パクパク！おいしい！");
-                setShake(true);
-                setTimeout(() => setShake(false), 300);
-            };
-
-            const toggleWalk = () => {
-                setIsWalking(!isWalking);
-                setMessage(!isWalking ? "リードをつけたよ！一緒に歩こう。" : "おうちに帰ってきたよ。");
-            };
-
-            return (
-                <div ref={containerRef} onMouseMove={handleMouseMove} onTouchMove={handleMouseMove} className="min-h-screen overflow-hidden relative flex flex-col items-center justify-center font-sans text-stone-200">
-                    <div className="z-10 flex flex-col items-center gap-8 p-8 max-w-md w-full">
-                        <h1 className="text-3xl font-bold text-stone-100">みみず散歩シム</h1>
-                        
-                        <div className="w-full bg-black/40 backdrop-blur-md rounded-3xl p-5 border border-white/10">
-                            <div className="flex justify-between text-xs font-bold opacity-60"><span>HUNGER</span><span>{Math.round(hunger)}%</span></div>
-                            <div className="h-3 w-full bg-stone-900 rounded-full overflow-hidden border border-stone-800">
-                                <motion.div className={`h-full ${hunger > 70 ? 'bg-red-400' : 'bg-pink-400'}`} animate={{ width: `${hunger}%` }} />
-                            </div>
-                            <p className="text-center font-medium animate-pulse text-pink-100 mt-2">{message}</p>
-                        </div>
-
-                        <div className={`relative h-64 w-64 flex items-center justify-center`} style={isWalking ? { position: 'fixed', left: wormPos.x - 128, top: wormPos.y - 128 } : {}}>
-                            <motion.div className="flex items-center -space-x-4 cursor-pointer" animate={{ scale: size, x: shake ? [-10, 10, -10, 10, 0] : 0 }} onClick={handleFeed}>
-                                {[...Array(5)].map((_, i) => (
-                                    <div key={i} className="w-14 h-14 rounded-full shadow-lg" style={{ backgroundColor: i === 0 ? "#FFB6C1" : "#FF99AA", zIndex: 10 - i }} />
-                                ))}
-                            </motion.div>
-                        </div>
-
-                        <div className="flex gap-4 w-full">
-                            <button onClick={handleFeed} disabled={isWalking} className="flex-1 py-4 rounded-2xl font-bold bg-pink-400 text-stone-900">餌をあげる</button>
+        setInterval(() => {
+            hunger = Math.min(hunger + 2, 100);
+            hungerText.innerText = Math.round(hunger) + '%';
+            hungerBar.style.width = hunger + '%';
+        }, 2000);
+    </script>
+</body>
+</html>
