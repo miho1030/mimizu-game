@@ -1,16 +1,29 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --animate-dirt-moving: dirtMoving 5s linear infinite;
+  --animate-bounce-custom: bounceCustom 0.3s ease-in-out 2;
+
+  @keyframes dirtMoving {
+    0% { background-position: 0 0; }
+    100% { background-position: 100px 100px; }
+  }
+  @keyframes bounceCustom {
+    0%, 100% { transform: scale(var(--worm-scale, 1)) translateY(0); }
+    50% { transform: scale(var(--worm-scale, 1)) translateY(-10px); }
+  }
+}
 
 .bg-dirt {
-  background-color: #2D241E;
-  background-image: radial-gradient(#3a2d26 10%, transparent 11%), radial-gradient(#1f1814 10%, transparent 11%);
-  background-size: 30px 30px;
-}
-.bg-grass {
-  background-color: #344922;
-  background-image: linear-gradient(45deg, #3a5127 25%, transparent 25%), linear-gradient(-45deg, #3a5127 25%, transparent 25%);
+  background-color: #4B3621;
+  background-image: radial-gradient(#3d2c1b 10%, transparent 10%);
   background-size: 20px 20px;
 }
-.animate-dirt-moving { animation: dirt-moving 60s linear infinite; }
-@keyframes dirt-moving { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
+
+.bg-grass {
+  background-color: #7cfc00;
+  background-image: 
+    linear-gradient(135deg, #a5ff5b 25%, transparent 25%), 
+    linear-gradient(225deg, #a5ff5b 25%, transparent 25%);
+  background-size: 30px 30px;
+}
