@@ -15,13 +15,10 @@ export default function App() {
   const [lastFed, setLastFed] = useState<number | null>(null);
   const [message, setMessage] = useState("こんにちは！ぼくはみみずだよ。");
   const [isEating, setIsEating] = useState(false);
-  
-  // Walking states
   const [isWalking, setIsWalking] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Hunger increases over time
   useEffect(() => {
     if (!isNamed) return;
     const timer = setInterval(() => {
@@ -30,7 +27,6 @@ export default function App() {
     return () => clearInterval(timer);
   }, [isWalking, isNamed]);
 
-  // Update message
   useEffect(() => {
     if (!isNamed) return;
     if (isWalking) {
@@ -46,12 +42,10 @@ export default function App() {
 
   const handleFeed = useCallback(() => {
     if (hunger <= 0 || isWalking) return;
-
     setHunger((prev) => Math.max(prev - 25, 0));
     setSize((prev) => prev + 0.05);
     setLastFed(Date.now());
     setMessage("パクパク！おいしい！");
-    
     setIsEating(true);
     setTimeout(() => setIsEating(false), 600);
   }, [hunger, isWalking]);
@@ -68,18 +62,9 @@ export default function App() {
 
   const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isWalking || !containerRef.current) return;
-    
     const rect = containerRef.current.getBoundingClientRect();
-    let clientX, clientY;
-    
-    if ('touches' in e) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     setMousePos({
       x: clientX - rect.left - rect.width / 2,
       y: clientY - rect.top - rect.height / 2,
@@ -90,38 +75,32 @@ export default function App() {
     e.preventDefault();
     if (wormName.trim()) {
       setIsNamed(true);
-      setMessage(`こんにちは！ぼくは${wormName}だよ。`);
     }
   };
 
   if (!isNamed) {
     return (
-      <div className="min-h-screen bg-dirt animate-dirt-moving flex items-center justify-center p-6 text-stone-200">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-sm bg-[#2D241E]/95 backdrop-blur-md rounded-3xl p-8 border border-white/10 shadow-2xl text-center space-y-6"
-        >
-          <div className="space-y-4">
-            <div className="text-6xl animate-bounce">🪱</div>
-            <h1 className="text-3xl font-bold text-stone-100 italic tracking-tight">MIMIZU SIM</h1>
-            <p className="text-sm opacity-70">あなたのみみずに名前を付けて育てよう</p>
-          </div>
-          
-          <form onSubmit={handleStart} className="space-y-4">
-            <input 
-              type="text" 
-              value={wormName}
-              onChange={(e) => setWormName(e.target.value)}
-              placeholder="なまえを入力..."
-              className="w-full bg-black/40 border border-white/20 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-pink-400/50 transition-colors text-center"
-              maxLength={10}
-              required
-            />
-            <button 
-              type="submit"
-              className="w-full bg-pink-500 hover:bg-pink-400 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] border-b-4 border-pink-700"
-            >
-              ゲームをはじめる
-            </button>
+      <div className="min-h-screen bg-stone-900 flex items-center justify-center p-6 text-stone-200">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[#2D241E] p-8 rounded-3xl text-center">
+          <h1 className="text-3xl font-bold mb-6">MIMIZU SIM</h1>
+          <form onSubmit={handleStart}>
+            <input value={wormName} onChange={(e) => setWormName(e.target.value)} placeholder="なまえ..." className="w-full bg-black/40 rounded-xl px-4 py-3 mb-4 text-center" required />
+            <button type="submit" className="w-full bg-pink-500 py-4 rounded-xl font-bold">ゲームをはじめる</button>
           </form>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={containerRef} onMouseMove={handleMouseMove} className="min-h-screen bg-stone-800 flex flex-col items-center justify-center">
+      <h1 className="text-4xl text-white font-bold mb-8">{wormName}</h1>
+      <div className="bg-[#2D241E] p-6 rounded-2xl mb-8 w-64 text-center text-pink-100">{message}</div>
+      <motion.div animate={{ scale: size }} className="w-20 h-20 bg-pink-400 rounded-full" />
+      <div className="flex gap-4 mt-8">
+        <button onClick={handleFeed} className="bg-pink-500 px-6 py-3 rounded-xl font-bold text-white">餌をあげる</button>
+        <button onClick={toggleWalk} className="bg-stone-100 px-6 py-3 rounded-xl font-bold">{isWalking ? "帰る" : "散歩"}</button>
+      </div>
+    </div>
+  );
+}
